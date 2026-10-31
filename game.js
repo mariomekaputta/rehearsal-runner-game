@@ -6,6 +6,7 @@
   const GROUND_Y = 170;
   const GRAVITY = 1900;
   const JUMP_V = 600;
+  const DOUBLE_JUMP_V = 420; // lompatan kedua sedikit lebih lemah agar tidak keluar layar
   const START_SPEED = 280;
   const MAX_SPEED = 680;
   const ACCEL = 7; // unit/detik per detik
@@ -15,6 +16,10 @@
   const JUMP_BUFFER = 0.12; // detik, lompatan yang ditekan sesaat sebelum mendarat tetap terhitung
   const RESTART_LOCK = 0.5; // detik, cegah langsung main lagi tak sengaja
   const BEST_KEY = "lariTerus.best";
+  // Rintangan tinggi: lebih tinggi dari puncak lompatan biasa (~95 unit), jadi wajib lompat 2x
+  const TALL_MIN_SCORE = 300;
+  const TALL_CHANCE = 0.25;
+  const TALL_HINT_TIME = 2.2; // detik waktu permainan
 
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
@@ -28,12 +33,14 @@
   const restartBtn = document.getElementById("restartBtn");
   const pauseScreen = document.getElementById("pauseScreen");
   const pauseBtn = document.getElementById("pauseBtn");
+  const tallHint = document.getElementById("tallHint");
 
   let scale = 1;
   let viewW = 600; // lebar dunia yang terlihat (unit)
 
   let state = "ready"; // ready | playing | paused | over
   let player, obstacles, speed, distance, nextGap, groundOffset, runTime, jumpBuffer, overTime;
+  let tallSeen, hintTimer;
   let best = loadBest();
 
   function loadBest() {
@@ -73,7 +80,7 @@
 
   // ---- Reset / mulai ----
   function reset() {
-    player = { y: GROUND_Y - PLAYER_H, vy: 0, onGround: true };
+    player = { y: GROUND_Y - PLAYER_H, vy: 0, onGround: true, canDouble: false };
     obstacles = [];
     speed = START_SPEED;
     distance = 0;
@@ -81,6 +88,9 @@
     runTime = 0;
     jumpBuffer = 0;
     nextGap = viewW * 0.6;
+    tallSeen = false;
+    hintTimer = 0;
+    tallHint.classList.add("hidden");
     updateScore();
   }
 
@@ -122,6 +132,7 @@
     newBestEl.hidden = !isNew;
     overScreen.classList.remove("hidden");
     pauseBtn.classList.add("hidden");
+    tallHint.classList.add("hidden");
   }
 
   function currentScore() {
@@ -139,14 +150,28 @@
       start();
       doJump();
     } else if (state === "playing") {
-      if (player.onGround) doJump();
-      else jumpBuffer = JUMP_BUFFER;
+      if (player.onGround) {
+        doJump();
+      } else {
+        // Hampir mendarat: simpan sebagai lompatan berikutnya, jangan habiskan lompatan kedua
+        const toGround = GROUND_Y - PLAYER_H - player.y;
+        const landingSoon = player.vy > 0 && toGround < player.vy * JUMP_BUFFER;
+        if (!landingSoon && player.canDouble) doDoubleJump();
+        else jumpBuffer = JUMP_BUFFER;
+      }
     }
   }
 
   function doJump() {
     player.vy = -JUMP_V;
     player.onGround = false;
+    player.canDouble = true;
+    jumpBuffer = 0;
+  }
+
+  function doDoubleJump() {
+    player.vy = -DOUBLE_JUMP_V;
+    player.canDouble = false;
     jumpBuffer = 0;
   }
 
@@ -196,7 +221,15 @@
   function spawnObstacle() {
     const r = Math.random();
     let o;
-    if (r < 0.4) {
+    if (currentScore() >= TALL_MIN_SCORE && (!tallSeen || Math.random() < TALL_CHANCE)) {
+      // Menara tinggi: muncul pasti sekali segera setelah skor 300, lalu acak
+      o = { type: "tall", w: 16, h: 102 + Math.random() * 6 };
+      if (!tallSeen) {
+        tallSeen = true;
+        hintTimer = TALL_HINT_TIME;
+        tallHint.classList.remove("hidden");
+      }
+    } else if (r < 0.4) {
       const w = 16 + Math.random() * 14;
       const h = 18 + Math.random() * 14;
       o = { type: "box", w, h };
@@ -208,6 +241,7 @@
     }
     o.x = viewW + 10;
     obstacles.push(o);
+    return o;
   }
 
   function hitbox(o) {
@@ -237,6 +271,7 @@
         player.y = GROUND_Y - PLAYER_H;
         player.vy = 0;
         player.onGround = true;
+        player.canDouble = false;
         if (jumpBuffer > 0) doJump();
       }
     }
@@ -247,10 +282,16 @@
 
     nextGap -= dx;
     if (nextGap <= 0) {
-      spawnObstacle();
-      // Jarak antar rintangan ikut membesar sesuai kecepatan agar selalu bisa dilompati
-      const airDist = speed * ((2 * JUMP_V) / GRAVITY);
-      nextGap = airDist + 70 + Math.random() * (speed * 0.9);
+      const o = spawnObstacle();
+      // Jarak antar rintangan ikut membesar sesuai kecepatan agar selalu bisa dilompati.
+      // Setelah rintangan tinggi, beri ruang untuk lompatan ganda yang lebih lama di udara.
+      const airTime = o.type === "tall" ? 1.0 : (2 * JUMP_V) / GRAVITY;
+      nextGap = speed * airTime + 70 + Math.random() * (speed * 0.9);
+    }
+
+    if (hintTimer > 0) {
+      hintTimer -= dt;
+      if (hintTimer <= 0) tallHint.classList.add("hidden");
     }
 
     // Tabrakan
@@ -281,6 +322,8 @@
     pole: "#2fb3a6",
     poleCap: "#ffcf3a",
     spikes: "#ff4f7a",
+    tall: "#3a6df0",
+    tallStripe: "#9db8ff",
   };
 
   // Awan bergerak pelan (paralaks), hanya hiasan
@@ -335,7 +378,15 @@
 
   function drawObstacle(o) {
     const top = GROUND_Y - o.h;
-    if (o.type === "box") {
+    if (o.type === "tall") {
+      ctx.fillStyle = COLORS.tall;
+      ctx.fillRect(o.x, top + 4, o.w, o.h - 4);
+      ctx.fillRect(o.x + 2, top, o.w - 4, 4);
+      ctx.fillStyle = COLORS.tallStripe;
+      for (let sy = top + 12; sy < GROUND_Y - 6; sy += 14) {
+        ctx.fillRect(o.x + 3, sy, o.w - 6, 2);
+      }
+    } else if (o.type === "box") {
       ctx.fillStyle = COLORS.box;
       ctx.fillRect(o.x, top, o.w, o.h);
       ctx.fillStyle = COLORS.boxLine;
