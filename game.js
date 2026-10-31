@@ -26,11 +26,13 @@
   const finalScoreEl = document.getElementById("finalScore");
   const newBestEl = document.getElementById("newBest");
   const restartBtn = document.getElementById("restartBtn");
+  const pauseScreen = document.getElementById("pauseScreen");
+  const pauseBtn = document.getElementById("pauseBtn");
 
   let scale = 1;
   let viewW = 600; // lebar dunia yang terlihat (unit)
 
-  let state = "ready"; // ready | playing | over
+  let state = "ready"; // ready | playing | paused | over
   let player, obstacles, speed, distance, nextGap, groundOffset, runTime, jumpBuffer, overTime;
   let best = loadBest();
 
@@ -87,6 +89,23 @@
     state = "playing";
     startScreen.classList.add("hidden");
     overScreen.classList.add("hidden");
+    pauseScreen.classList.add("hidden");
+    pauseBtn.classList.remove("hidden", "paused");
+  }
+
+  // Jeda: update() tidak dipanggil sama sekali, jadi dunia dan skor berhenti total
+  function togglePause() {
+    if (state === "playing") {
+      state = "paused";
+      pauseScreen.classList.remove("hidden");
+      pauseBtn.classList.add("paused");
+      pauseBtn.setAttribute("aria-label", "Lanjut");
+    } else if (state === "paused") {
+      state = "playing";
+      pauseScreen.classList.add("hidden");
+      pauseBtn.classList.remove("paused");
+      pauseBtn.setAttribute("aria-label", "Jeda");
+    }
   }
 
   function gameOver() {
@@ -102,6 +121,7 @@
     finalScoreEl.textContent = score;
     newBestEl.hidden = !isNew;
     overScreen.classList.remove("hidden");
+    pauseBtn.classList.add("hidden");
   }
 
   function currentScore() {
@@ -135,6 +155,11 @@
   }
 
   window.addEventListener("keydown", (e) => {
+    if (e.code === "KeyP" || e.key === "p" || e.key === "P") {
+      if (!e.repeat) togglePause();
+      return;
+    }
+    if (state === "paused") return;
     if (e.code === "Space" || e.key === " ") {
       e.preventDefault();
       if (e.repeat) return;
@@ -144,16 +169,22 @@
   });
 
   stage.addEventListener("pointerdown", (e) => {
-    if (e.target === restartBtn) return;
+    if (e.target.closest("button")) return;
     if (e.pointerType === "mouse" && e.button !== 0) return;
     e.preventDefault();
-    if (state !== "over") press();
+    if (state === "ready" || state === "playing") press();
   });
 
   restartBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     restartBtn.blur();
     tryRestart();
+  });
+
+  pauseBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    pauseBtn.blur();
+    togglePause();
   });
 
   // Cegah menu konteks / zoom karena tekan lama atau gestur di area game

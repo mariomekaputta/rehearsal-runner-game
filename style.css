@@ -73,8 +73,55 @@ canvas {
   border-radius: 10px;
 }
 
-.overlay.hidden {
+.overlay.hidden,
+.pause-btn.hidden {
   display: none;
+}
+
+.pause-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 2px solid #ff7a45;
+  border-radius: 50%;
+}
+
+.pause-btn span {
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  background: #ff7a45;
+}
+
+.pause-btn.paused span:first-child {
+  width: 0;
+  height: 0;
+  border-radius: 0;
+  background: none;
+  border-style: solid;
+  border-width: 9px 0 9px 15px;
+  border-color: transparent transparent transparent #ff7a45;
+  margin-left: 4px;
+}
+
+.pause-btn.paused span:last-child {
+  display: none;
+}
+
+.pause-btn:hover,
+.pause-btn:focus-visible {
+  background: #fff;
 }
 
 .title {
