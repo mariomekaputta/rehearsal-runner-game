@@ -7,8 +7,8 @@
 html,
 body {
   height: 100%;
-  background: #fff;
-  color: #000;
+  background: #eaf7ff;
+  color: #1f2a44;
   font-family: "Courier New", Courier, monospace;
   overflow: hidden;
   overscroll-behavior: none;
@@ -41,7 +41,7 @@ body {
 }
 
 .hud span:first-child {
-  color: #777;
+  color: #6b7a99;
 }
 
 .stage {
@@ -54,6 +54,7 @@ body {
 
 canvas {
   display: block;
+  border-radius: 10px;
   width: 100%;
   touch-action: none;
 }
@@ -68,7 +69,8 @@ canvas {
   gap: 10px;
   text-align: center;
   padding: 0 16px;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
 }
 
 .overlay.hidden {
@@ -87,7 +89,7 @@ canvas {
 }
 
 kbd {
-  border: 1px solid #000;
+  border: 1px solid #1f2a44;
   border-radius: 3px;
   padding: 0 4px;
   font-family: inherit;
@@ -111,8 +113,8 @@ button {
   font-weight: bold;
   letter-spacing: 2px;
   color: #fff;
-  background: #000;
-  border: 2px solid #000;
+  background: #ff7a45;
+  border: 2px solid #ff7a45;
   border-radius: 4px;
   padding: 12px 28px;
   min-height: 44px;
@@ -123,6 +125,6 @@ button {
 button:hover,
 button:focus-visible {
   background: #fff;
-  color: #000;
+  color: #ff7a45;
   outline: none;
 }

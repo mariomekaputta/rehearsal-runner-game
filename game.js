@@ -235,39 +235,90 @@
   }
 
   // ---- Gambar ----
+  const COLORS = {
+    skyTop: "#7ec8ff",
+    skyBottom: "#d6f0ff",
+    cloud: "rgba(255, 255, 255, 0.9)",
+    grass: "#5ccf6b",
+    grassDark: "#3fae52",
+    soil: "#e8b56a",
+    soilDots: "#c98f45",
+    player: "#ff7a45",
+    playerLeg: "#c4512a",
+    box: "#8e6cf0",
+    boxLine: "#b9a3ff",
+    pole: "#2fb3a6",
+    poleCap: "#ffcf3a",
+    spikes: "#ff4f7a",
+  };
+
+  // Awan bergerak pelan (paralaks), hanya hiasan
+  const clouds = [
+    { x: 60, y: 30, s: 1 },
+    { x: 260, y: 55, s: 0.7 },
+    { x: 470, y: 25, s: 0.9 },
+    { x: 700, y: 50, s: 0.8 },
+  ];
+
   function draw() {
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, viewW, WORLD_H);
-    if (!player) return;
+    const sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+    sky.addColorStop(0, COLORS.skyTop);
+    sky.addColorStop(1, COLORS.skyBottom);
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, viewW, GROUND_Y);
 
-    ctx.fillStyle = "#000";
-    ctx.strokeStyle = "#000";
-
-    // Tanah
-    ctx.fillRect(0, GROUND_Y, viewW, 1.5);
-    for (let x = -groundOffset; x < viewW; x += 40) {
-      ctx.fillRect(x + 6, GROUND_Y + 7, 6, 1);
-      ctx.fillRect(x + 24, GROUND_Y + 14, 3, 1);
+    // Awan
+    const span = Math.max(viewW + 120, 900);
+    ctx.fillStyle = COLORS.cloud;
+    for (const c of clouds) {
+      const cx = ((((c.x - distance * 0.15 * c.s) % span) + span) % span) - 60;
+      drawCloud(cx, c.y, c.s);
     }
 
+    // Tanah: rumput di atas, tanah cokelat muda di bawah
+    ctx.fillStyle = COLORS.soil;
+    ctx.fillRect(0, GROUND_Y, viewW, WORLD_H - GROUND_Y);
+    ctx.fillStyle = COLORS.grass;
+    ctx.fillRect(0, GROUND_Y, viewW, 5);
+    ctx.fillStyle = COLORS.grassDark;
+    ctx.fillRect(0, GROUND_Y + 5, viewW, 1.5);
+    const off = player ? groundOffset : 0;
+    ctx.fillStyle = COLORS.soilDots;
+    for (let x = -off; x < viewW; x += 40) {
+      ctx.fillRect(x + 6, GROUND_Y + 12, 6, 2);
+      ctx.fillRect(x + 24, GROUND_Y + 21, 3, 2);
+    }
+
+    if (!player) return;
     for (const o of obstacles) drawObstacle(o);
     drawPlayer();
+  }
+
+  function drawCloud(x, y, s) {
+    ctx.beginPath();
+    ctx.arc(x, y, 9 * s, 0, Math.PI * 2);
+    ctx.arc(x + 11 * s, y - 5 * s, 11 * s, 0, Math.PI * 2);
+    ctx.arc(x + 24 * s, y, 9 * s, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   function drawObstacle(o) {
     const top = GROUND_Y - o.h;
     if (o.type === "box") {
+      ctx.fillStyle = COLORS.box;
       ctx.fillRect(o.x, top, o.w, o.h);
-      ctx.fillStyle = "#fff";
+      ctx.fillStyle = COLORS.boxLine;
       ctx.fillRect(o.x + 3, top + 3, o.w - 6, 1.5);
-      ctx.fillStyle = "#000";
     } else if (o.type === "pole") {
+      ctx.fillStyle = COLORS.pole;
       ctx.fillRect(o.x + 3, top + 6, o.w - 6, o.h - 6);
+      ctx.fillStyle = COLORS.poleCap;
       ctx.beginPath();
       ctx.arc(o.x + o.w / 2, top + 6, o.w / 2, Math.PI, 0);
       ctx.fill();
     } else {
       const sw = o.w / o.n;
+      ctx.fillStyle = COLORS.spikes;
       ctx.beginPath();
       for (let i = 0; i < o.n; i++) {
         const sx = o.x + i * sw;
@@ -288,6 +339,7 @@
     const bodyH = PLAYER_H - 6;
 
     // Kaki
+    ctx.strokeStyle = COLORS.playerLeg;
     ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
     ctx.beginPath();
@@ -307,6 +359,7 @@
     ctx.stroke();
 
     // Badan
+    ctx.fillStyle = COLORS.player;
     ctx.beginPath();
     roundRect(x, y, w, bodyH, 8);
     ctx.fill();
@@ -316,7 +369,7 @@
     ctx.beginPath();
     ctx.arc(x + 14, y + 7, 3, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = "#222";
     ctx.beginPath();
     ctx.arc(x + 15, y + 7, 1.3, 0, Math.PI * 2);
     ctx.fill();
