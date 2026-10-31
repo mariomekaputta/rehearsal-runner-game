@@ -1,12 +1,6 @@
-# Sistem operasi
 .DS_Store
 Thumbs.db
-
-# Editor
+*.log
 .vscode/
 .idea/
 *.swp
-
-# Log & file sementara
-*.log
-*.tmp

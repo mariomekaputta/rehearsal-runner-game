@@ -4,37 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Lari Bulat</title>
+  <title>Lari Terus</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="wrap">
-    <header class="hud">
-      <span class="title">LARI BULAT</span>
-      <span class="scores">
-        <span>TERBAIK <b id="best">00000</b></span>
-        <span><b id="score">00000</b></span>
-      </span>
-    </header>
+  <main class="app">
+    <div class="hud">
+      <span>HI <b id="best">00000</b></span>
+      <span><b id="score">00000</b></span>
+    </div>
 
     <div class="stage" id="stage">
-      <canvas id="game" aria-label="Area permainan"></canvas>
+      <canvas id="game"></canvas>
 
       <div class="overlay" id="startScreen">
-        <p class="big">Siap lari?</p>
-        <p class="hint">Tekan <kbd>Spasi</kbd>, klik, atau ketuk layar untuk mulai &amp; lompat.<br>Tahan lebih lama untuk lompat lebih tinggi.</p>
+        <p class="title">LARI TERUS</p>
+        <p class="hint">Tekan <kbd>Spasi</kbd>, klik, atau ketuk layar untuk lompat</p>
+        <p class="blink">Ketuk / Spasi untuk mulai</p>
       </div>
 
       <div class="overlay hidden" id="overScreen">
-        <p class="big">GAME OVER</p>
+        <p class="title">GAME OVER</p>
         <p class="final">Skor <b id="finalScore">0</b></p>
-        <p class="newbest hidden" id="newBest">Rekor baru!</p>
+        <p class="final" id="newBest" hidden>Rekor baru!</p>
         <button type="button" id="restartBtn">Main Lagi</button>
       </div>
     </div>
-
-    <p class="foot">Spasi / ↑ / klik / ketuk = lompat · P = jeda</p>
   </main>
 
   <script src="game.js"></script>
